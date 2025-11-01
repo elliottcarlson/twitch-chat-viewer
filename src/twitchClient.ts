@@ -76,15 +76,6 @@ export class TwitchClient {
         this.client.on('message', (channel, tags, message, self) => {
             if (self || !this.messageCallback) return;
 
-            this.outputChannel.appendLine(`Message received from ${tags.username}: ${message}`);
-
-            const thirdPartyEmotesObj = Object.fromEntries(this.thirdPartyEmotes);
-            
-            // Debug: Log third-party emotes being sent
-            if (Object.keys(thirdPartyEmotesObj).length > 0) {
-                this.outputChannel.appendLine(`  Third-party emotes available: ${Object.keys(thirdPartyEmotesObj).length} (${Object.keys(thirdPartyEmotesObj).slice(0, 5).join(', ')}...)`);
-            }
-
             const twitchMessage: TwitchMessage = {
                 username: tags.username || 'anonymous',
                 displayName: tags['display-name'] || tags.username || 'Anonymous',
@@ -92,7 +83,7 @@ export class TwitchClient {
                 color: tags.color || this.getRandomColor(),
                 badges: this.parseBadges(tags.badges),
                 emotes: tags.emotes || {},
-                thirdPartyEmotes: thirdPartyEmotesObj,
+                thirdPartyEmotes: Object.fromEntries(this.thirdPartyEmotes),
                 timestamp: Date.now(),
                 messageType: tags.bits ? 'bits' : 'chat',
                 bits: tags.bits ? parseInt(tags.bits) : undefined
@@ -104,7 +95,7 @@ export class TwitchClient {
         // Handle subscription events
         this.client.on('subscription', (channel, username, method, message, userstate) => {
             if (!this.messageCallback) return;
-            this.outputChannel.appendLine(`New subscription from ${username}, method: ${JSON.stringify(method)}`);
+            this.outputChannel.appendLine(`New subscription from ${username}`);
 
             const subMessage: TwitchMessage = {
                 username: username,
@@ -125,10 +116,10 @@ export class TwitchClient {
         // Handle resubscription events
         this.client.on('resub', (channel, username, months, message, userstate, methods) => {
             if (!this.messageCallback) return;
-            this.outputChannel.appendLine(`Resub from ${username}: ${months} months (cumulative: ${userstate['msg-param-cumulative-months']})`);
-
+            
             // Use cumulative months if available, fallback to months parameter
             const cumulativeMonths = parseInt(userstate['msg-param-cumulative-months'] || '0') || months;
+            this.outputChannel.appendLine(`Resub from ${username}: ${cumulativeMonths} months`);
 
             const resubMessage: TwitchMessage = {
                 username: username,

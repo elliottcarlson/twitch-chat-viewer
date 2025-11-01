@@ -196,6 +196,47 @@ Run `npm install` to ensure all dependencies are installed.
 ### "webpack not recognized" error
 Make sure you're running commands from the project directory and dependencies are installed.
 
+## GitHub Actions CI/CD
+
+The repository includes a GitHub Actions workflow (`.github/workflows/build.yml`) that automatically builds and packages the extension.
+
+### Automatic Builds
+
+The workflow triggers on:
+- **Push to main/master**: Builds and uploads VSIX as an artifact
+- **Pull requests**: Validates that the build succeeds
+- **Version tags** (e.g., `v0.0.2`): Creates a GitHub release with the VSIX attached
+- **Manual trigger**: Can be run manually from the Actions tab
+
+### Creating a Release
+
+To create a new release:
+
+1. Update the version in `package.json`:
+   ```bash
+   npm version patch  # or minor, or major
+   ```
+
+2. Push the version commit and tag:
+   ```bash
+   git push && git push --tags
+   ```
+
+3. The GitHub Action will automatically:
+   - Build the extension
+   - Package the VSIX
+   - Create a GitHub release
+   - Attach the VSIX file to the release
+
+### Downloading Build Artifacts
+
+After any push to main/master:
+1. Go to the repository on GitHub
+2. Click the "Actions" tab
+3. Click on the latest workflow run
+4. Scroll down to "Artifacts"
+5. Download the VSIX file
+
 ## Contributing
 
 1. Fork the repository

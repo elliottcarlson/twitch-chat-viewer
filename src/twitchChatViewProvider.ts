@@ -39,21 +39,17 @@ export class TwitchChatViewProvider implements vscode.WebviewViewProvider {
 
         // Track visibility and active state
         webviewView.onDidChangeVisibility(() => {
-            const wasVisible = this.isViewVisible;
             this.isViewVisible = webviewView.visible;
-            this.outputChannel.appendLine(`Webview visibility changed: ${wasVisible} -> ${webviewView.visible}`);
 
             if (webviewView.visible) {
                 // View is visible - always clear unread count
                 this.isViewActive = true;
-                this.outputChannel.appendLine('View is visible, clearing unread count');
                 this.unreadCount = 0;
                 // Force badge update multiple times to ensure it clears
                 this._view!.badge = undefined;
                 setTimeout(() => {
                     if (this._view && this.isViewVisible) {
                         this._view.badge = undefined;
-                        this.outputChannel.appendLine('Force cleared badge after timeout');
                     }
                 }, 50);
             } else {
@@ -69,9 +65,7 @@ export class TwitchChatViewProvider implements vscode.WebviewViewProvider {
         // Listen for messages from webview to detect focus
         webviewView.webview.onDidReceiveMessage((message) => {
             if (message.type === 'webviewFocused') {
-                const wasActive = this.isViewActive;
                 this.isViewActive = true;
-                this.outputChannel.appendLine(`Webview focused (was active: ${wasActive})`);
                 // Always clear when webview reports focus, regardless of previous state
                 this.clearUnreadCount();
             }
@@ -81,12 +75,10 @@ export class TwitchChatViewProvider implements vscode.WebviewViewProvider {
         if (webviewView.visible) {
             this.isViewVisible = true;
             this.isViewActive = true;
-            this.outputChannel.appendLine('View initially visible, setting as active');
         }
 
         // Handle disposal
         webviewView.onDidDispose(() => {
-            this.outputChannel.appendLine('Webview disposed, disconnecting...');
             this.twitchClient.disconnect();
         });
 
@@ -137,7 +129,6 @@ export class TwitchChatViewProvider implements vscode.WebviewViewProvider {
         const shouldIncrement = !this.isViewVisible || !this.isViewActive;
 
         if (shouldIncrement) {
-            this.outputChannel.appendLine(`Incrementing unread (visible: ${this.isViewVisible}, active: ${this.isViewActive})`);
             this.incrementUnreadCount();
         }
 
@@ -154,7 +145,6 @@ export class TwitchChatViewProvider implements vscode.WebviewViewProvider {
             this.sendMessageToWebview({ type: 'checkFocus' });
         } else {
             this.isViewActive = false;
-            this.outputChannel.appendLine('View not visible, marking as inactive');
         }
     }
 
@@ -170,9 +160,6 @@ export class TwitchChatViewProvider implements vscode.WebviewViewProvider {
     }
 
     private clearUnreadCount() {
-        if (this.unreadCount > 0) {
-            this.outputChannel.appendLine(`Clearing ${this.unreadCount} unread messages`);
-        }
         this.unreadCount = 0;
         this.updateBadge();
     }
@@ -180,13 +167,11 @@ export class TwitchChatViewProvider implements vscode.WebviewViewProvider {
     private updateBadge() {
         if (this._view) {
             if (this.unreadCount > 0) {
-                this.outputChannel.appendLine(`Setting badge to ${this.unreadCount}`);
                 this._view.badge = {
                     value: this.unreadCount,
                     tooltip: `${this.unreadCount} unread message${this.unreadCount > 1 ? 's' : ''}`
                 };
             } else {
-                this.outputChannel.appendLine(`Removing badge (count: ${this.unreadCount})`);
                 // Workaround: Set to null, then use empty object, then undefined
                 this._view.badge = null as any;
                 setTimeout(() => {
@@ -201,8 +186,6 @@ export class TwitchChatViewProvider implements vscode.WebviewViewProvider {
                     }
                 }, 10);
             }
-        } else {
-            this.outputChannel.appendLine(`Cannot update badge - view is not available`);
         }
     }
 
@@ -568,11 +551,6 @@ export class TwitchChatViewProvider implements vscode.WebviewViewProvider {
         function parseMessageWithEmotes(text, twitchEmotes, thirdPartyEmotes) {
             let html = '';
 
-            // Debug: Log what we received
-            console.log('[FFZ Debug] Parsing message:', text);
-            console.log('[FFZ Debug] Third-party emotes:', thirdPartyEmotes);
-            console.log('[FFZ Debug] Third-party emote count:', thirdPartyEmotes ? Object.keys(thirdPartyEmotes).length : 0);
-
             // First, handle Twitch emotes (position-based)
             if (!twitchEmotes || Object.keys(twitchEmotes).length === 0) {
                 html = escapeHtml(text);
@@ -616,7 +594,6 @@ export class TwitchChatViewProvider implements vscode.WebviewViewProvider {
 
             // Second, handle third-party emotes (word-based)
             if (thirdPartyEmotes && Object.keys(thirdPartyEmotes).length > 0) {
-                console.log('[FFZ Debug] Processing third-party emotes...');
                 // Split by word boundaries while preserving spaces
                 const words = html.split(/(\\s+)/);
                 html = words.map(word => {
@@ -627,14 +604,11 @@ export class TwitchChatViewProvider implements vscode.WebviewViewProvider {
                     
                     // Check if this word is a third-party emote
                     if (thirdPartyEmotes[word]) {
-                        console.log(\`[FFZ Debug] Found emote "\${word}" -> \${thirdPartyEmotes[word]}\`);
                         return \`<img class="emote" src="\${thirdPartyEmotes[word]}" alt="\${word}" title="\${word}" />\`;
                     }
                     
                     return word;
                 }).join('');
-            } else {
-                console.log('[FFZ Debug] No third-party emotes to process');
             }
 
             return html;

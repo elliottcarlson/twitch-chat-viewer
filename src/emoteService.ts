@@ -96,7 +96,6 @@ export class EmoteService {
                             const url = this.getFFZEmoteUrl(emote);
                             if (url) {
                                 emotes.set(emote.name, url);
-                                this.outputChannel.appendLine(`  - FFZ global emote: "${emote.name}" -> ${url}`);
                             }
                         }
                     }
@@ -129,7 +128,6 @@ export class EmoteService {
                             const url = this.getFFZEmoteUrl(emote);
                             if (url) {
                                 emotes.set(emote.name, url);
-                                this.outputChannel.appendLine(`  - FFZ channel emote: "${emote.name}" -> ${url}`);
                             }
                         }
                     }
