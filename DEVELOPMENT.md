@@ -228,12 +228,22 @@ To create a new release:
 The workflow will:
 - Build the extension with webpack
 - Package it into a VSIX file
+- **Publish to VS Code Marketplace** (if token is configured)
 - Create a GitHub release with tag `v0.0.2`
 - Attach the VSIX file to the release
 - Generate release notes automatically
 - Upload the VSIX as a downloadable artifact
 
-After the workflow completes, the release will be visible on the GitHub Releases page with the VSIX file ready for download.
+After the workflow completes, the release will be visible on the GitHub Releases page with the VSIX file ready for download, and the extension will be live on the VS Code Marketplace.
+
+### Setting Up Marketplace Publishing
+
+To enable automatic publishing to the VS Code Marketplace, see [`.github/MARKETPLACE_SETUP.md`](.github/MARKETPLACE_SETUP.md) for detailed instructions on:
+- Creating a publisher account
+- Generating a Personal Access Token
+- Adding the token to GitHub Secrets
+
+Once configured, the workflow will automatically publish new versions to the marketplace.
 
 ## Contributing
 
