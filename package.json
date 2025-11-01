@@ -1,0 +1,102 @@
+{
+  "name": "twitch-chat-viewer",
+  "displayName": "Twitch Chat Viewer",
+  "description": "View Twitch chat in your IDE",
+  "version": "0.0.1",
+  "publisher": "sublimnl",
+  "icon": "resources/icon.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "twitch",
+    "chat",
+    "streaming",
+    "irc"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Twitch Chat Viewer",
+      "properties": {
+        "twitchChat.channel": {
+          "type": "string",
+          "default": "",
+          "description": "Twitch channel/username to view chat from"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "twitchChat.focus",
+        "title": "Focus Twitch Chat",
+        "category": "View"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "twitchChat.focus",
+        "key": "ctrl+alt+t",
+        "mac": "cmd+alt+t"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "twitchChat.focus",
+          "when": "view == twitchChatView"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "twitchChatPanel",
+          "title": "Twitch Chat"
+        }
+      ]
+    },
+    "views": {
+      "twitchChatPanel": [
+        {
+          "type": "webview",
+          "id": "twitchChatView",
+          "name": "Twitch Chat"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "webpack --mode production --devtool hidden-source-map",
+    "package": "vsce package",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^24.x",
+    "@types/vscode": "^1.85.0",
+    "@types/ws": "^8.18.1",
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
+    "@vscode/vsce": "^3.6.2",
+    "eslint": "^9.39.0",
+    "ts-loader": "^9.5.4",
+    "typescript": "^5.9.3",
+    "webpack": "^5.102.1",
+    "webpack-cli": "^6.0.1"
+  },
+  "dependencies": {
+    "tmi.js": "^1.8.5"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/twitch-chat-viewer"
+  }
+}
