@@ -42,6 +42,10 @@ jobs:
         run: npx @vscode/vsce publish -p ${{ secrets.VSCODE_MARKETPLACE_TOKEN }}
         continue-on-error: false
 
+      - name: Publish to Open VSX Registry
+        run: npx ovsx publish -p ${{ secrets.OPEN_VSX_TOKEN }}
+        continue-on-error: false
+
       - name: Upload VSIX artifact
         uses: actions/upload-artifact@v4
         with:

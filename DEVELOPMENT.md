@@ -229,21 +229,24 @@ The workflow will:
 - Build the extension with webpack
 - Package it into a VSIX file
 - **Publish to VS Code Marketplace** (if token is configured)
+- **Publish to Open VSX Registry** (if token is configured)
 - Create a GitHub release with tag `v0.0.2`
 - Attach the VSIX file to the release
 - Generate release notes automatically
 - Upload the VSIX as a downloadable artifact
 
-After the workflow completes, the release will be visible on the GitHub Releases page with the VSIX file ready for download, and the extension will be live on the VS Code Marketplace.
+After the workflow completes, the release will be visible on the GitHub Releases page with the VSIX file ready for download, and the extension will be live on both the VS Code Marketplace and Open VSX Registry.
 
 ### Setting Up Marketplace Publishing
 
-To enable automatic publishing to the VS Code Marketplace, see [`.github/MARKETPLACE_SETUP.md`](.github/MARKETPLACE_SETUP.md) for detailed instructions on:
-- Creating a publisher account
-- Generating a Personal Access Token
-- Adding the token to GitHub Secrets
+To enable automatic publishing to both marketplaces, see [`.github/MARKETPLACE_SETUP.md`](.github/MARKETPLACE_SETUP.md) for detailed instructions on:
+- Creating publisher accounts (VS Code Marketplace + Open VSX)
+- Generating Personal Access Tokens
+- Adding the tokens to GitHub Secrets
 
-Once configured, the workflow will automatically publish new versions to the marketplace.
+Once configured, the workflow will automatically publish new versions to both registries, making your extension available in:
+- **VS Code** (Microsoft's marketplace)
+- **VSCodium, Gitpod, Eclipse Theia** (Open VSX Registry)
 
 ## Contributing
 

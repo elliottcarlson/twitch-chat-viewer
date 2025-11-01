@@ -1,6 +1,8 @@
 # Twitch Chat Viewer
 
-A VSCode/Cursor extension that displays Twitch chat in your IDE's bottom panel. Watch your favorite streamer's chat without leaving your editor!
+A VSCode/Cursor extension that displays Twitch chat in your IDE's bottom panel. 
+
+![Twitch Chat Viewer Screenshot](resources/screenshot.png)
 
 ## Features
 
@@ -27,7 +29,11 @@ A VSCode/Cursor extension that displays Twitch chat in your IDE's bottom panel. 
 
 ### From Marketplace
 
-Search for "Twitch Chat Viewer" in the VSCode/Cursor extensions marketplace and click Install.
+**VS Code:**
+Search for "Twitch Chat Viewer" in the VS Code extensions marketplace and click Install.
+
+**VSCodium / Other Editors:**
+This extension is also available on [Open VSX Registry](https://open-vsx.org/). Search for "Twitch Chat Viewer" in your editor's extension marketplace.
 
 ## Usage
 
