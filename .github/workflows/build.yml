@@ -1,17 +1,12 @@
 name: Build VSIX
 
 on:
-  push:
-    branches:
-      - main
-      - master
-    tags:
-      - 'v*'
-  pull_request:
-    branches:
-      - main
-      - master
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 0.0.2)'
+        required: true
+        type: string
 
 jobs:
   build:
@@ -43,16 +38,19 @@ jobs:
       - name: Upload VSIX artifact
         uses: actions/upload-artifact@v4
         with:
-          name: twitch-chat-viewer-${{ steps.package-version.outputs.version }}
+          name: twitch-chat-viewer-${{ inputs.version }}
           path: '*.vsix'
           if-no-files-found: error
 
       - name: Create Release
-        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: v${{ inputs.version }}
+          name: Release v${{ inputs.version }}
           files: '*.vsix'
           generate_release_notes: true
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

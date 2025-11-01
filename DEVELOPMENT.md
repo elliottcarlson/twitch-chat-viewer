@@ -198,15 +198,7 @@ Make sure you're running commands from the project directory and dependencies ar
 
 ## GitHub Actions CI/CD
 
-The repository includes a GitHub Actions workflow (`.github/workflows/build.yml`) that automatically builds and packages the extension.
-
-### Automatic Builds
-
-The workflow triggers on:
-- **Push to main/master**: Builds and uploads VSIX as an artifact
-- **Pull requests**: Validates that the build succeeds
-- **Version tags** (e.g., `v0.0.2`): Creates a GitHub release with the VSIX attached
-- **Manual trigger**: Can be run manually from the Actions tab
+The repository includes a GitHub Actions workflow (`.github/workflows/build.yml`) that builds, packages, and releases the extension.
 
 ### Creating a Release
 
@@ -216,26 +208,32 @@ To create a new release:
    ```bash
    npm version patch  # or minor, or major
    ```
+   This updates the version (e.g., `0.0.1` → `0.0.2`) and creates a git commit.
 
-2. Push the version commit and tag:
+2. Push the version commit:
    ```bash
-   git push && git push --tags
+   git push
    ```
 
-3. The GitHub Action will automatically:
-   - Build the extension
-   - Package the VSIX
-   - Create a GitHub release
-   - Attach the VSIX file to the release
+3. Go to the repository on GitHub and navigate to the "Actions" tab
 
-### Downloading Build Artifacts
+4. Click on "Build VSIX" workflow
 
-After any push to main/master:
-1. Go to the repository on GitHub
-2. Click the "Actions" tab
-3. Click on the latest workflow run
-4. Scroll down to "Artifacts"
-5. Download the VSIX file
+5. Click "Run workflow" button
+
+6. Enter the version number (e.g., `0.0.2` - without the `v` prefix)
+
+7. Click "Run workflow"
+
+The workflow will:
+- Build the extension with webpack
+- Package it into a VSIX file
+- Create a GitHub release with tag `v0.0.2`
+- Attach the VSIX file to the release
+- Generate release notes automatically
+- Upload the VSIX as a downloadable artifact
+
+After the workflow completes, the release will be visible on the GitHub Releases page with the VSIX file ready for download.
 
 ## Contributing
 
