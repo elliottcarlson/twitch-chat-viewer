@@ -33,7 +33,7 @@ export class TwitchChatViewProvider implements vscode.WebviewViewProvider {
         context: vscode.WebviewViewResolveContext,
         _token: vscode.CancellationToken,
     ) {
-        this.outputChannel.appendLine('resolveWebviewView called');
+        this.outputChannel.appendLine(`resolveWebviewView called (state: ${context.state ? 'exists' : 'null'})`);
         this._view = webviewView;
 
         webviewView.webview.options = {
@@ -46,6 +46,7 @@ export class TwitchChatViewProvider implements vscode.WebviewViewProvider {
 
         // Track visibility and active state
         webviewView.onDidChangeVisibility(() => {
+            this.outputChannel.appendLine(`Visibility changed: ${webviewView.visible ? 'visible' : 'hidden'}`);
             this.isViewVisible = webviewView.visible;
 
             if (webviewView.visible) {
@@ -98,6 +99,7 @@ export class TwitchChatViewProvider implements vscode.WebviewViewProvider {
 
         // Handle disposal
         webviewView.onDidDispose(() => {
+            this.outputChannel.appendLine('WebviewView disposed - disconnecting client');
             this.twitchClient.disconnect();
         });
 
@@ -183,8 +185,9 @@ export class TwitchChatViewProvider implements vscode.WebviewViewProvider {
     }
 
     private handleMessage(message: TwitchMessage) {
-        // Check current visibility state before incrementing
-        const shouldIncrement = !this.isViewVisible || !this.isViewActive;
+        // Only increment unread counter for actual chat messages (not subscriptions, bits, system messages, etc.)
+        const isChatMessage = !message.messageType || message.messageType === 'chat';
+        const shouldIncrement = isChatMessage && (!this.isViewVisible || !this.isViewActive);
 
         if (shouldIncrement) {
             this.incrementUnreadCount();

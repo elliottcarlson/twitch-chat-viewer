@@ -2,6 +2,17 @@
 
 All notable changes to the "Twitch Chat Viewer" extension will be documented in this file.
 
+## [0.0.6] - 2025-11-02
+
+### Fixed
+- Fixed VS Code panel persistence issue where Twitch Chat panel would close when switching to other panels (Terminal, Output, etc.)
+- Fixed unread message counter to only increment for actual chat messages (no longer counts subscriptions, bits, or system messages)
+- Fixed BTTV emote fetching to use user ID instead of channel name (matching API requirements)
+
+### Technical
+- Added debug logging for webview lifecycle events to help diagnose future issues
+- Centralized configuration constants into `src/config.ts` for easier maintenance
+
 ## [0.0.5] - 2025-11-02
 
 ### Added
@@ -32,7 +43,7 @@ All notable changes to the "Twitch Chat Viewer" extension will be documented in 
   - Slow Mode
 - **First-Time Chatter Highlighting**: Special badge for users chatting in the channel for the first time
 - **Message Deletion Support**: Real-time handling of deleted messages and user bans/timeouts
-  - Messages fade out with strikethrough animation when deleted
+  - Messages fade out with strike through animation when deleted
   - All messages from banned/timed-out users are removed
 - **Improved Chat Layout**:
   - Fixed header at top (connection status + settings gear)

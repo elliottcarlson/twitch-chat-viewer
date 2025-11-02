@@ -30,17 +30,16 @@ export class EmoteService {
             const ffzEmotes = await this.fetchFFZEmotes(channelName);
             ffzEmotes.forEach((url, name) => allEmotes.set(name, url));
 
-            // Fetch BTTV emotes
-            const bttvEmotes = await this.fetchBTTVEmotes(channelName);
-            bttvEmotes.forEach((url, name) => allEmotes.set(name, url));
-
-            // Fetch 7TV emotes (requires user ID)
+            // Fetch BTTV and 7TV emotes (both require user ID)
             if (channelUserId) {
+                const bttvEmotes = await this.fetchBTTVEmotes(channelUserId);
+                bttvEmotes.forEach((url, name) => allEmotes.set(name, url));
+
                 const sevenTVEmotes = await this.fetch7TVEmotes(channelUserId);
                 sevenTVEmotes.forEach((url, name) => allEmotes.set(name, url));
             }
 
-            this.outputChannel.appendLine(`Total emotes: FFZ=${ffzEmotes.size}, BTTV=${bttvEmotes.size}, 7TV=${channelUserId ? this.sevenTVEmotes.size : 0}`);
+            this.outputChannel.appendLine(`Total emotes: FFZ=${ffzEmotes.size}, BTTV=${channelUserId ? this.bttvEmotes.size : 0}, 7TV=${channelUserId ? this.sevenTVEmotes.size : 0}`);
         } catch (error) {
             this.outputChannel.appendLine(`Error fetching all emotes: ${error}`);
         }
@@ -90,7 +89,7 @@ export class EmoteService {
                 // Check for non-200 status codes
                 if (res.statusCode !== 200) {
                     reject(new Error(`HTTP ${res.statusCode}`));
-                    res.resume(); // Consume response data to free up memory
+                    res.resume();
                     return;
                 }
 
@@ -189,8 +188,6 @@ export class EmoteService {
         if (emote.urls) {
             let url = emote.urls['1'] || emote.urls['2'] || emote.urls['4'];
             if (url) {
-                // FFZ URLs are protocol-relative (//cdn.frankerfacez.com/...)
-                // Only add https: if it doesn't already have a protocol
                 if (url.startsWith('//')) {
                     return `https:${url}`;
                 } else if (url.startsWith('http')) {
@@ -205,10 +202,10 @@ export class EmoteService {
 
     /**
      * Fetch BTTV emotes for a channel
-     * @param channelName The Twitch channel name
+     * @param channelUserId The Twitch user ID for the channel
      * @returns Map of emote name -> URL
      */
-    private async fetchBTTVEmotes(channelName: string): Promise<Map<string, string>> {
+    private async fetchBTTVEmotes(channelUserId: string): Promise<Map<string, string>> {
         const emotes = new Map<string, string>();
 
         try {
@@ -223,9 +220,9 @@ export class EmoteService {
             }
             this.outputChannel.appendLine(`Loaded ${emotes.size} global BTTV emotes`);
 
-            // Fetch channel-specific BTTV emotes
+            // Fetch channel-specific BTTV emotes (using user ID)
             try {
-                const channelData = await this.httpsGet(`https://api.betterttv.net/3/cached/users/twitch/${channelName}`);
+                const channelData = await this.httpsGet(`https://api.betterttv.net/3/cached/users/twitch/${channelUserId}`);
                 if (channelData.channelEmotes && Array.isArray(channelData.channelEmotes)) {
                     for (const emote of channelData.channelEmotes) {
                         if (emote.id && emote.code) {
@@ -243,7 +240,7 @@ export class EmoteService {
                 this.outputChannel.appendLine(`Loaded ${emotes.size} total BTTV emotes (including channel)`);
             } catch (error) {
                 if (error instanceof Error && error.message.includes('HTTP 404')) {
-                    this.outputChannel.appendLine(`No BTTV emotes configured for channel: ${channelName}`);
+                    this.outputChannel.appendLine(`No BTTV emotes configured for user ID: ${channelUserId}`);
                 } else {
                     this.outputChannel.appendLine(`Failed to fetch BTTV channel emotes: ${error}`);
                 }
@@ -304,14 +301,6 @@ export class EmoteService {
         }
 
         return emotes;
-    }
-
-    /**
-     * Get the currently loaded emotes
-     * @returns Map of emote name -> URL
-     */
-    getEmotes(): Map<string, string> {
-        return this.ffzEmotes;
     }
 }
 

@@ -2,6 +2,7 @@ import * as tmi from 'tmi.js';
 import * as vscode from 'vscode';
 import * as https from 'https';
 import { EmoteService } from './emoteService';
+import { config } from './config';
 
 export interface TwitchMessage {
     username: string;
@@ -12,8 +13,8 @@ export interface TwitchMessage {
     emotes: { [emoteid: string]: string[] };
     thirdPartyEmotes: { [emoteName: string]: string };
     timestamp: number;
-    messageId?: string; // IRC message ID for moderation
-    isFirstMessage?: boolean; // First-time chatter
+    messageId?: string;
+    isFirstMessage?: boolean;
     messageType?: 'chat' | 'subscription' | 'resub' | 'subgift' | 'bits' | 'system';
     bits?: number;
     subMonths?: number;
@@ -23,21 +24,20 @@ export interface TwitchMessage {
 }
 
 export class TwitchClient {
-    // Use the same Client ID as the auth provider
-    private static readonly CLIENT_ID = 'hijf2gf2x1p7qtugiqow7vx0pyonkr';
+    private static readonly CLIENT_ID = config.twitch.clientId;
     private static readonly BROADCASTER_BADGE_URL = 'https://static-cdn.jtvnw.net/badges/v1/5527c58c-fb7d-422d-b71b-f309dcb85cc1/1';
 
     private client: tmi.Client | null = null;
     private currentChannel: string = '';
     private currentUsername: string | undefined;
-    private currentUserId: string | undefined; // Store user ID for BTTV/7TV
-    private currentUserColor: string | undefined; // Store user's chat color
+    private currentUserId: string | undefined;
+    private currentUserColor: string | undefined;
     private messageCallback: ((message: TwitchMessage) => void) | null = null;
     private outputChannel: vscode.OutputChannel;
     private emoteService: EmoteService;
     private thirdPartyEmotes: Map<string, string> = new Map();
     private shieldModePollingInterval: NodeJS.Timeout | undefined;
-    private authToken: string | undefined; // Store auth token for API calls
+    private authToken: string | undefined;
 
     constructor(private onMessage: (message: TwitchMessage) => void, outputChannel: vscode.OutputChannel) {
         this.messageCallback = onMessage;
@@ -60,7 +60,7 @@ export class TwitchClient {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${cleanToken}`,
-                    'Client-Id': TwitchClient.CLIENT_ID // Use the correct Client ID!
+                    'Client-Id': TwitchClient.CLIENT_ID
                 }
             };
 
@@ -78,11 +78,8 @@ export class TwitchClient {
                             if (json.data && json.data.length > 0) {
                                 const username = json.data[0].login;
                                 const userId = json.data[0].id;
-                                this.currentUserId = userId; // Store user ID for BTTV/7TV
+                                this.currentUserId = userId;
                                 this.outputChannel.appendLine(`Fetched username: ${username}, ID: ${userId}`);
-
-                                // Color will be fetched from IRC GLOBALUSERSTATE when we connect
-
                                 resolve(username);
                             } else {
                                 this.outputChannel.appendLine('No user data in response');
@@ -129,7 +126,6 @@ export class TwitchClient {
             return;
         }
 
-        // Remove # if present and convert to lowercase
         channel = channel.replace('#', '').toLowerCase().trim();
         this.currentChannel = channel;
         this.outputChannel.appendLine(`Normalized channel name: "${channel}"`);
@@ -170,7 +166,6 @@ export class TwitchClient {
         this.client.on('message', (channel, tags, message, self) => {
             if (self || !this.messageCallback) return;
 
-            // Cast tags to access non-standard properties
             const tagData = tags as any;
 
             const username = tags.username || 'anonymous';
@@ -183,8 +178,8 @@ export class TwitchClient {
                 emotes: tags.emotes || {},
                 thirdPartyEmotes: Object.fromEntries(this.thirdPartyEmotes),
                 timestamp: Date.now(),
-                messageId: tags.id, // IRC message ID for moderation
-                isFirstMessage: tagData['first-msg'] === true || tagData['first-msg'] === '1', // First-time chatter
+                messageId: tags.id,
+                isFirstMessage: tagData['first-msg'] === true || tagData['first-msg'] === '1',
                 messageType: tags.bits ? 'bits' : 'chat',
                 bits: tags.bits ? parseInt(tags.bits) : undefined
             };
@@ -217,7 +212,6 @@ export class TwitchClient {
         this.client.on('resub', (channel, username, months, message, userstate, methods) => {
             if (!this.messageCallback) return;
 
-            // Use cumulative months if available, fallback to months parameter
             const cumulativeMonths = parseInt(userstate['msg-param-cumulative-months'] || '0') || months;
             this.outputChannel.appendLine(`Resub from ${username}: ${cumulativeMonths} months`);
 
@@ -296,7 +290,7 @@ export class TwitchClient {
                         followersOnly: followersOnlyValue !== -1 ? followersOnlyValue : false,
                         slowMode: tags['slow'] ? parseInt(tags['slow']) : 0
                     };
-                    // Send room state to UI (with special flag)
+
                     this.messageCallback({
                         username: '',
                         displayName: '',
@@ -307,7 +301,7 @@ export class TwitchClient {
                         thirdPartyEmotes: {},
                         timestamp: Date.now(),
                         messageType: 'chat' as any,
-                        roomStateUpdate: roomState // Special flag
+                        roomStateUpdate: roomState
                     } as any);
                 }
             }
@@ -328,7 +322,7 @@ export class TwitchClient {
                 const tags = messageCloned.tags;
                 if (tags && tags['target-msg-id'] && this.messageCallback) {
                     this.outputChannel.appendLine(`Message deleted: ${tags['target-msg-id']}`);
-                    // Notify to remove this specific message
+
                     this.messageCallback({
                         username: '',
                         displayName: '',
@@ -347,12 +341,12 @@ export class TwitchClient {
             // Handle user timeout/ban (CLEARCHAT)
             else if (messageCloned.command === 'CLEARCHAT') {
                 const tags = messageCloned.tags;
-                // If there's a username in params, it's a timeout/ban of that user
+
                 if (messageCloned.params && messageCloned.params.length > 1) {
                     const username = messageCloned.params[1];
                     const duration = tags && tags['ban-duration'];
                     this.outputChannel.appendLine(`User messages cleared: ${username} (${duration ? duration + 's timeout' : 'ban'})`);
-                    // Notify to remove all messages from this user
+
                     if (this.messageCallback) {
                         this.messageCallback({
                             username: username,
@@ -364,7 +358,7 @@ export class TwitchClient {
                             thirdPartyEmotes: {},
                             timestamp: Date.now(),
                             messageType: 'chat' as any,
-                            deletedUsername: username // Special flag
+                            deletedUsername: username
                         } as any);
                     }
                 } else {
@@ -381,7 +375,7 @@ export class TwitchClient {
                             thirdPartyEmotes: {},
                             timestamp: Date.now(),
                             messageType: 'chat' as any,
-                            clearAllMessages: true // Special flag
+                            clearAllMessages: true
                         } as any);
                     }
                 }
@@ -496,7 +490,6 @@ export class TwitchClient {
             this.client = null;
             this.thirdPartyEmotes.clear();
 
-            // Stop shield mode polling
             this.stopShieldModePolling();
             this.authToken = undefined;
         }
@@ -514,7 +507,6 @@ export class TwitchClient {
 
     /**
      * Generate a deterministic color based on username
-     * Same username will always get the same color
      * @param username The username to generate a color for
      * @returns Hex color code
      */
@@ -578,7 +570,6 @@ export class TwitchClient {
 
             // Manually add our own message to the chat (tmi.js doesn't echo it back)
             if (this.messageCallback) {
-                // Check if we're the broadcaster (our username matches the channel)
                 const isBroadcaster = this.currentUsername === this.currentChannel;
                 const badges: string[] = [];
 
@@ -592,7 +583,7 @@ export class TwitchClient {
                     message: message,
                     color: this.currentUserColor || '#9147ff', // Use fetched color or Twitch purple as fallback
                     badges: badges,
-                    emotes: {}, // Could parse emotes from our message, but keep it simple
+                    emotes: {},
                     thirdPartyEmotes: Object.fromEntries(this.thirdPartyEmotes),
                     timestamp: Date.now(),
                     messageType: 'chat'
@@ -981,7 +972,7 @@ export class TwitchClient {
                     break;
                 case 'followersOnly':
                     body.follower_mode = enabled;
-                    body.follower_mode_duration = enabled ? 0 : undefined; // 0 = any follower
+                    body.follower_mode_duration = enabled ? 0 : undefined;
                     break;
                 case 'slowMode':
                     body.slow_mode = value !== undefined && value > 0;

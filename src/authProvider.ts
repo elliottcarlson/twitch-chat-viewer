@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as http from 'http';
 import * as crypto from 'crypto';
 import * as https from 'https';
+import { config } from './config';
 
 /**
  * Authentication session data
@@ -36,25 +37,13 @@ interface TokenResponse {
 
 /**
  * Authentication provider for Twitch OAuth using Implicit Grant Flow
- * Perfect for client-side applications like VS Code extensions
- * No client secret required - token returned directly in URL fragment
  * @see https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/#implicit-grant-flow
  */
 export class TwitchAuthProvider {
-    // Use your actual Twitch Client ID here
-    private static readonly CLIENT_ID = 'hijf2gf2x1p7qtugiqow7vx0pyonkr';
-    private static readonly REDIRECT_URI = 'http://localhost:3000';
-    private static readonly SCOPES = [
-        'chat:read',
-        'chat:edit',
-        'user:read:email',
-        'channel:moderate',
-        'moderator:manage:banned_users', // Required for ban/timeout API
-        'moderator:manage:chat_messages', // Required for deleting messages
-        'moderator:manage:shield_mode', // Required for Shield Mode
-        'moderator:manage:chat_settings' // Required for chat settings (subs-only, slow mode, etc.)
-    ];
-    private static readonly STORAGE_KEY = 'twitch_auth_session';
+    private static readonly CLIENT_ID = config.twitch.clientId;
+    private static readonly REDIRECT_URI = config.twitch.redirectUri;
+    private static readonly SCOPES = config.twitch.scopes;
+    private static readonly STORAGE_KEY = config.storage.authSessionKey;
 
     constructor(
         private readonly context: vscode.ExtensionContext,
@@ -64,7 +53,6 @@ export class TwitchAuthProvider {
     /**
      * Sign in to Twitch using Implicit Grant Flow
      * Opens browser for OAuth and starts local server for callback
-     * Token is returned directly in the URL fragment (no exchange needed!)
      */
     async signIn(): Promise<AuthSession | undefined> {
         try {
@@ -91,7 +79,7 @@ export class TwitchAuthProvider {
 
             const session: AuthSession = {
                 accessToken: tokenData.access_token,
-                refreshToken: '', // Implicit flow doesn't provide refresh tokens
+                refreshToken: '',
                 expiresIn: tokenData.expires_in || 0,
                 username: username
             };
