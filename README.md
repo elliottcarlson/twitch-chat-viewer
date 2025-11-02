@@ -69,11 +69,11 @@ Access via the settings gear button:
 
 ### From Marketplace
 
-**VS Code:**
-Search for "Twitch Chat Viewer" in the VS Code extensions marketplace and click Install.
+**VS Code Marketplace:**
+[Install from VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=sublimnl.twitch-chat-viewer)
 
-**VSCodium / Cursor / Other Editors:**
-This extension is also available on [Open VSX Registry](https://open-vsx.org/). Search for "Twitch Chat Viewer" in your editor's extension marketplace.
+**Open VSX Registry (VSCodium / Cursor / Other Editors):**
+[Install from Open VSX](https://open-vsx.org/extension/sublimnl/twitch-chat-viewer)
 
 ## Usage
 
