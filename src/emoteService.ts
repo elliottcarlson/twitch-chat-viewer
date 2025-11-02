@@ -9,9 +9,43 @@ export interface ThirdPartyEmote {
 export class EmoteService {
     private outputChannel: vscode.OutputChannel;
     private ffzEmotes: Map<string, string> = new Map();
+    private bttvEmotes: Map<string, string> = new Map();
+    private sevenTVEmotes: Map<string, string> = new Map();
 
     constructor(outputChannel: vscode.OutputChannel) {
         this.outputChannel = outputChannel;
+    }
+
+    /**
+     * Fetch all emotes from FFZ, BTTV, and 7TV
+     * @param channelName The Twitch channel name (lowercase)
+     * @param channelUserId Optional Twitch user ID for the channel
+     * @returns Combined map of all emotes
+     */
+    async fetchAllEmotes(channelName: string, channelUserId?: string): Promise<Map<string, string>> {
+        const allEmotes = new Map<string, string>();
+
+        try {
+            // Fetch FFZ emotes
+            const ffzEmotes = await this.fetchFFZEmotes(channelName);
+            ffzEmotes.forEach((url, name) => allEmotes.set(name, url));
+
+            // Fetch BTTV emotes
+            const bttvEmotes = await this.fetchBTTVEmotes(channelName);
+            bttvEmotes.forEach((url, name) => allEmotes.set(name, url));
+
+            // Fetch 7TV emotes (requires user ID)
+            if (channelUserId) {
+                const sevenTVEmotes = await this.fetch7TVEmotes(channelUserId);
+                sevenTVEmotes.forEach((url, name) => allEmotes.set(name, url));
+            }
+
+            this.outputChannel.appendLine(`Total emotes: FFZ=${ffzEmotes.size}, BTTV=${bttvEmotes.size}, 7TV=${channelUserId ? this.sevenTVEmotes.size : 0}`);
+        } catch (error) {
+            this.outputChannel.appendLine(`Error fetching all emotes: ${error}`);
+        }
+
+        return allEmotes;
     }
 
     /**
@@ -167,6 +201,109 @@ export class EmoteService {
             }
         }
         return null;
+    }
+
+    /**
+     * Fetch BTTV emotes for a channel
+     * @param channelName The Twitch channel name
+     * @returns Map of emote name -> URL
+     */
+    private async fetchBTTVEmotes(channelName: string): Promise<Map<string, string>> {
+        const emotes = new Map<string, string>();
+
+        try {
+            // Fetch global BTTV emotes
+            const globalData = await this.httpsGet('https://api.betterttv.net/3/cached/emotes/global');
+            if (Array.isArray(globalData)) {
+                for (const emote of globalData) {
+                    if (emote.id && emote.code) {
+                        emotes.set(emote.code, `https://cdn.betterttv.net/emote/${emote.id}/1x`);
+                    }
+                }
+            }
+            this.outputChannel.appendLine(`Loaded ${emotes.size} global BTTV emotes`);
+
+            // Fetch channel-specific BTTV emotes
+            try {
+                const channelData = await this.httpsGet(`https://api.betterttv.net/3/cached/users/twitch/${channelName}`);
+                if (channelData.channelEmotes && Array.isArray(channelData.channelEmotes)) {
+                    for (const emote of channelData.channelEmotes) {
+                        if (emote.id && emote.code) {
+                            emotes.set(emote.code, `https://cdn.betterttv.net/emote/${emote.id}/1x`);
+                        }
+                    }
+                }
+                if (channelData.sharedEmotes && Array.isArray(channelData.sharedEmotes)) {
+                    for (const emote of channelData.sharedEmotes) {
+                        if (emote.id && emote.code) {
+                            emotes.set(emote.code, `https://cdn.betterttv.net/emote/${emote.id}/1x`);
+                        }
+                    }
+                }
+                this.outputChannel.appendLine(`Loaded ${emotes.size} total BTTV emotes (including channel)`);
+            } catch (error) {
+                if (error instanceof Error && error.message.includes('HTTP 404')) {
+                    this.outputChannel.appendLine(`No BTTV emotes configured for channel: ${channelName}`);
+                } else {
+                    this.outputChannel.appendLine(`Failed to fetch BTTV channel emotes: ${error}`);
+                }
+            }
+
+            this.bttvEmotes = emotes;
+        } catch (error) {
+            this.outputChannel.appendLine(`Error fetching BTTV emotes: ${error}`);
+        }
+
+        return emotes;
+    }
+
+    /**
+     * Fetch 7TV emotes for a channel
+     * @param channelUserId The Twitch user ID for the channel
+     * @returns Map of emote name -> URL
+     */
+    private async fetch7TVEmotes(channelUserId: string): Promise<Map<string, string>> {
+        const emotes = new Map<string, string>();
+
+        try {
+            // Fetch global 7TV emotes
+            const globalData = await this.httpsGet('https://7tv.io/v3/emote-sets/global');
+            if (globalData.emotes && Array.isArray(globalData.emotes)) {
+                for (const emote of globalData.emotes) {
+                    if (emote.id && emote.name && emote.data && emote.data.host) {
+                        const url = `https:${emote.data.host.url}/1x.webp`;
+                        emotes.set(emote.name, url);
+                    }
+                }
+            }
+            this.outputChannel.appendLine(`Loaded ${emotes.size} global 7TV emotes`);
+
+            // Fetch channel-specific 7TV emotes
+            try {
+                const channelData = await this.httpsGet(`https://7tv.io/v3/users/twitch/${channelUserId}`);
+                if (channelData.emote_set && channelData.emote_set.emotes && Array.isArray(channelData.emote_set.emotes)) {
+                    for (const emote of channelData.emote_set.emotes) {
+                        if (emote.id && emote.name && emote.data && emote.data.host) {
+                            const url = `https:${emote.data.host.url}/1x.webp`;
+                            emotes.set(emote.name, url);
+                        }
+                    }
+                }
+                this.outputChannel.appendLine(`Loaded ${emotes.size} total 7TV emotes (including channel)`);
+            } catch (error) {
+                if (error instanceof Error && error.message.includes('HTTP 404')) {
+                    this.outputChannel.appendLine(`No 7TV emotes configured for user ID: ${channelUserId}`);
+                } else {
+                    this.outputChannel.appendLine(`Failed to fetch 7TV channel emotes: ${error}`);
+                }
+            }
+
+            this.sevenTVEmotes = emotes;
+        } catch (error) {
+            this.outputChannel.appendLine(`Error fetching 7TV emotes: ${error}`);
+        }
+
+        return emotes;
     }
 
     /**

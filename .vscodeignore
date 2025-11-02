@@ -5,6 +5,7 @@ out/**
 node_modules/**
 .gitignore
 .git/**
+.github/**
 vsc-extension-quickstart.md
 **/tsconfig.json
 **/.eslintrc.json

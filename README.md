@@ -1,21 +1,61 @@
 # Twitch Chat Viewer
 
-A VSCode/Cursor extension that displays Twitch chat in your IDE's bottom panel. 
+A VSCode/Cursor extension that brings Twitch chat directly into your IDE, designed for streamers who code. Read chat, send messages, and moderate your community without leaving your editor.
 
-![Twitch Chat Viewer Screenshot](resources/screenshot.png)
+![Twitch Chat Viewer Screenshot](resources/ss_interface.png)
 
 ## Features
 
-- **Bottom Panel Integration**: Chat appears in the panel area alongside Terminal and Debug Console
-- **Read-Only Chat Display**: View chat messages as they come in (no authentication required)
-- **User Colors**: Messages display with each user's chosen Twitch color
-- **Emote Support**: Twitch and FrankerFaceZ (FFZ) emotes are automatically rendered inline
-- **Badge Display**: Shows broadcaster, moderator, VIP, and subscriber badges
-- **Subscription & Bit Notifications**: Special styling for subscriptions, resubs, gift subs, and bit cheers
-- **Unread Counter**: A badge shows the number of unread messages when the panel is not visible
-- **Auto-Connect**: Automatically connects when you configure a channel
-- **Keyboard Shortcut**: Quickly focus the chat panel with `Ctrl+Alt+T` (Windows/Linux) or `Cmd+Alt+T` (Mac)
-- **Clear Button**: Clear chat history with a single click
+### Chat Experience
+- **Bottom Panel Integration**: Chat appears alongside Terminal and Debug Console
+- **Send Messages**: Participate in chat by sending messages (requires authentication)
+- **Expanded Emote Support**: Twitch, FrankerFaceZ (FFZ), BetterTTV (BTTV), and 7TV emotes render inline
+- **First-Time Chatter Highlighting**: Special badge for users chatting in your channel for the first time
+- **Subscription & Bit Notifications**: Special styling for subs, resubs, gift subs, and bit cheers
+- **Pause Scroll**: Pause auto-scrolling to read chat history without interruption
+- **Unread Counter**: Badge shows unread messages when the panel isn't active
+
+### Moderation Tools (Authenticated)
+- **Click-to-Moderate**: Click any username to access quick moderation actions
+  - Timeout
+  - Ban/Unban users
+  - Delete individual messages
+
+### Chat Commands (Authenticated)
+Type `/` to see all available commands with intelligent autocomplete:
+
+![Chat Commands Hint](resources/ss_typeahead.png)
+
+**Moderation:**
+- `/ban <username>` - Permanently ban a user
+- `/unban <username>` - Remove a ban
+- `/timeout <username> [duration]` - Timeout a user (default: 10 min)
+- `/untimeout <username>` - Remove a timeout
+
+**Chat Modes:**
+- `/emoteonly` / `/emoteonlyoff` - Toggle emote-only mode
+- `/followers [duration]` / `/followersoff` - Toggle followers-only mode
+- `/shield` / `/shieldoff` - Toggle Shield Mode
+- `/slow [seconds]` / `/slowoff` - Toggle slow mode (default: 30s)
+- `/subscribers` / `/subscribersoff` - Toggle subscribers-only mode
+
+**Command Features:**
+- Autocomplete with keyboard navigation (↑/↓, Tab, Enter, Esc)
+- Inline descriptions and argument hints
+- Commands execute locally (not sent as chat messages)
+
+### Chat Mode Controls (Authenticated)
+
+![Chat Mode Controls](resources/ss_options.png)
+
+Access via the settings gear button:
+- **Shield Mode** - Enhanced moderation (auto-polls every 30 seconds)
+- **Subscribers-Only** - Limit chat to subscribers
+- **Emotes-Only** - Only emotes allowed in chat
+- **Followers-Only** - Require following (customizable duration)
+- **Slow Mode** - Rate limit messages
+- **Pause Scroll** - Toggle auto-scrolling
+- **Clear Chat** - Clear your local chat history
 
 ## Installation
 
@@ -32,7 +72,7 @@ A VSCode/Cursor extension that displays Twitch chat in your IDE's bottom panel.
 **VS Code:**
 Search for "Twitch Chat Viewer" in the VS Code extensions marketplace and click Install.
 
-**VSCodium / Other Editors:**
+**VSCodium / Cursor / Other Editors:**
 This extension is also available on [Open VSX Registry](https://open-vsx.org/). Search for "Twitch Chat Viewer" in your editor's extension marketplace.
 
 ## Usage
@@ -54,6 +94,43 @@ Quickly open or focus the Twitch Chat panel:
 
 You can also find the "View: Focus Twitch Chat" command in the Command Palette.
 
+### Authentication (Optional)
+
+By default, the extension connects anonymously and provides read-only access to chat. To send messages and unlock moderation features, you can sign in with Twitch:
+
+#### How to Sign In:
+
+1. **Open Settings Menu**:
+   - Open the Twitch Chat panel
+   - Click the **Settings Gear** button in the header
+   - Click **"Sign In"**
+
+2. **Authorize with Twitch**:
+   - Your browser will open to Twitch's authorization page
+   - Click "Authorize" to grant permissions
+   - The browser will show a success message
+
+3. **Return to VS Code**:
+   - You're now signed in!
+   - Your username appears in the header
+   - The message input box is now active
+   - The settings menu shows chat mode controls
+   - Type your message and press Enter or click Send!
+
+**What authentication enables:**
+- Send messages to chat (your messages appear in the log)
+- BTTV and 7TV emotes (global and channel-specific)
+- Moderation tools (click usernames or use `/` commands)
+- Chat mode controls (Shield Mode, Subs-Only, etc.)
+
+**Security & Privacy:**
+- Uses Twitch's **OAuth 2.0 Implicit Grant Flow**
+- Local authentication server runs only during sign-in (port 3000)
+- Your tokens are never exposed in settings or logs
+- You can sign out anytime from the settings menu
+
+**To sign out**: Click the Settings Gear → "Sign Out"
+
 ### Configuration
 
 - `twitchChat.channel`: The Twitch channel/username to view chat from (without the # symbol)
@@ -68,35 +145,37 @@ When you're viewing a different panel (like Terminal), an unread badge will appe
 
 - **Twitch Emotes**: All native Twitch emotes are automatically detected and displayed
 - **FrankerFaceZ (FFZ)**: Global and channel-specific FFZ emotes are supported
+- **BetterTTV (BTTV)**: Global and channel-specific BTTV emotes (requires authentication)
+- **7TV**: Global and channel-specific 7TV emotes (requires authentication)
 - Emotes are fetched when connecting to a channel and rendered inline with chat messages
-
-### User Colors and Badges
-
-- Each user's message appears in their chosen Twitch color
-- Broadcaster, moderator, VIP, and subscriber badges are shown next to usernames
-- Timestamps are displayed for each message
 
 ### Chat History
 
-The extension maintains a rolling history of the last 200 messages to keep memory usage reasonable.
+The extension maintains a rolling history of the last 200 messages to keep memory usage reasonable. Use the "Pause Scroll" feature to read history without new messages auto-scrolling.
 
-## Anonymous Connection
+## Authentication Modes
 
-This extension uses an anonymous WebSocket connection to Twitch, meaning:
+This extension supports two modes:
+
+**Anonymous Mode (Default)**:
 - No authentication required
-- Read-only access
+- Read-only chat access
 - Works immediately after configuration
-- No OAuth tokens needed
+- Twitch and FFZ emotes only
+
+**Authenticated Mode (Optional)**:
+- Secure OAuth 2.0 Implicit Grant Flow
+- No backend server or secrets required
+- Send messages to chat
+- Full moderation toolkit (ban, timeout, delete)
+- Chat mode controls (Shield Mode, Subs-Only, etc.)
+- BTTV and 7TV emotes
 
 ## Requirements
 
 - VSCode or Cursor version 1.85.0 or higher
 - Internet connection to connect to Twitch chat via WebSocket
 
-## Known Issues
-
-- BTTV and 7TV emotes are not currently supported (requires Twitch API authentication)
-- Very high message volume channels may experience slight delays
 
 ## Contributing
 
@@ -109,7 +188,6 @@ This extension is licensed under the MIT License. See the LICENSE file for detai
 ## Credits
 
 - Built with [tmi.js](https://github.com/tmijs/tmi.js) for Twitch IRC WebSocket connectivity
-- Twitch badge images courtesy of Twitch
 
 ## Disclaimer
 

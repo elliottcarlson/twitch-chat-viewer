@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
 import { TwitchChatViewProvider } from './twitchChatViewProvider';
+import { TwitchAuthProvider } from './authProvider';
 
 let outputChannel: vscode.OutputChannel;
 let provider: TwitchChatViewProvider | undefined;
+let authProvider: TwitchAuthProvider | undefined;
 
 /**
  * Activates the Twitch Chat Viewer extension
@@ -13,7 +15,10 @@ export function activate(context: vscode.ExtensionContext) {
     outputChannel = vscode.window.createOutputChannel('Twitch Chat');
     outputChannel.appendLine('Twitch Chat Viewer extension activated');
 
-    provider = new TwitchChatViewProvider(context.extensionUri, outputChannel);
+    // Create auth provider
+    authProvider = new TwitchAuthProvider(context, outputChannel);
+
+    provider = new TwitchChatViewProvider(context.extensionUri, outputChannel, authProvider);
 
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(
@@ -46,6 +51,10 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(outputChannel);
+
+    // Focus the Twitch Chat panel on activation
+    outputChannel.appendLine('Auto-focusing Twitch Chat panel...');
+    vscode.commands.executeCommand('twitchChatView.focus');
 }
 
 /**
